@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velvet — Engineering Cutoffs & College Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F8F4F8;
+    --paper-raised: #FFFFFF;
+    --ink: #3D2242;
+    --ink-soft: #6D5872;
+    --ink-faint: #A290A6;
+    --velvet: #B15FA8;
+    --velvet-deep: #8A3F84;
+    --on-velvet: #FFFFFF;
+    --merit: #2F9E68;
+    --merit-soft: #E9F5EE;
+    --danger: #D65D6B;
+    --line: #E4D6E3;
+    --line-soft: #EFE4EE;
+    --chip-bg: #F1EAF0;
+    --tint: #F6EAF4;
+    --tint-line: #E4C6E0;
+    --shadow: 0 1px 2px rgba(61,34,66,0.05), 0 8px 24px rgba(61,34,66,0.07);
+    --shadow-lg: 0 12px 32px rgba(61,34,66,0.16);
+  }
+  html[data-theme="dark"]{
+    --paper: #241429;
+    --paper-raised: #2E1A33;
+    --ink: #F3E9F2;
+    --ink-soft: #C6B4C6;
+    --ink-faint: #93819A;
+    --velvet: #D080C6;
+    --velvet-deep: #B15FA8;
+    --on-velvet: #241429;
+    --merit: #4FCB8C;
+    --merit-soft: rgba(79,203,140,0.14);
+    --danger: #E8828E;
+    --line: #452A4C;
+    --line-soft: #3A2440;
+    --chip-bg: #3A2440;
+    --tint: #3A2044;
+    --tint-line: #5A3760;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-lg: 0 16px 40px rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .2s ease, color .2s ease;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:600; margin:0; letter-spacing:-0.01em; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  button{ font-family:'Inter',sans-serif; }
+
+  /* ---------- TOPBAR ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px clamp(16px,4vw,48px);
+    background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; cursor:pointer; background:none; border:none; padding:0; }
+  .brand-mark{
+    width:32px; height:32px; border-radius:8px; flex-shrink:0;
+    background:linear-gradient(155deg, var(--velvet), var(--velvet-deep));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Fraunces',serif; font-weight:700; font-size:16px;
+  }
+  .brand-text{ text-align:left; }
+  .brand-name{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; line-height:1.15; color:var(--ink); }
+  .brand-tagline{ font-size:11px; color:var(--ink-faint); margin-top:1px; }
+  @media (max-width:520px){ .brand-tagline{ display:none; } }
+
+  .top-actions{ display:flex; align-items:center; gap:6px; position:relative; }
+  .icon-btn{
+    position:relative;
+    width:38px; height:38px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid transparent; cursor:pointer;
+    color:var(--ink-soft); transition:background .15s, border-color .15s, color .15s;
+  }
+  .icon-btn svg{ width:19px; height:19px; }
+  .icon-btn:hover{ background:var(--tint); color:var(--velvet-deep); }
+  .icon-btn.is-active{ background:var(--tint); border-color:var(--tint-line); color:var(--velvet-deep); }
+  .dot{
+    position:absolute; top:7px; right:7px; width:7px; height:7px; border-radius:50%;
+    background:var(--danger); border:1.5px solid var(--paper);
+  }
+
+  .panel{
+    position:absolute; top:calc(100% + 10px); right:0;
+    width:300px; max-width:88vw;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow-lg);
+    padding:8px; display:none; z-index:110;
+  }
+  .panel.open{ display:block; }
+  .panel-title{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); padding:10px 12px 6px; }
+  .panel-item{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; cursor:pointer; transition:background .12s; }
+  .panel-item:hover{ background:var(--tint); }
+  .panel-divider{ height:1px; background:var(--line-soft); margin:6px 4px; }
+
+  .theme-row{ display:flex; gap:8px; padding:6px 12px 10px; }
+  .theme-btn{
+    flex:1; padding:9px 0; border-radius:9px; border:1.5px solid var(--line);
+    background:var(--paper-raised); color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px; transition:border-color .15s, color .15s, background .15s;
+  }
+  .theme-btn svg{ width:14px; height:14px; }
+  .theme-btn.active{ border-color:var(--velvet); color:var(--velvet-deep); background:var(--tint); }
+
+  .profile-row{ display:flex; align-items:center; gap:10px; padding:10px 12px 4px; }
+  .avatar{ width:38px; height:38px; border-radius:50%; background:linear-gradient(155deg, var(--velvet), var(--velvet-deep)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Fraunces',serif; flex-shrink:0; }
+  .profile-note{ font-size:12px; color:var(--ink-faint); padding:2px 12px 10px; line-height:1.5; }
+
+  .notif-empty, .update-list{ padding:4px 12px 12px; }
+  .notif-item{ font-size:13px; color:var(--ink-soft); padding:9px 0; border-bottom:1px solid var(--line-soft); line-height:1.5; }
+  .notif-item:last-child{ border-bottom:none; }
+  .notif-item b{ color:var(--ink); }
+  .update-entry{ padding:9px 0; border-bottom:1px solid var(--line-soft); }
+  .update-entry:last-child{ border-bottom:none; }
+  .update-ver{ font-size:12px; font-weight:700; color:var(--velvet-deep); font-family:'JetBrains Mono',monospace; }
+  .update-date{ font-size:11px; color:var(--ink-faint); margin-left:6px; }
+  .update-desc{ font-size:13px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* ---------- VIEW SHELL ---------- */
+  main{ max-width:1180px; margin:0 auto; padding:0 clamp(16px,4vw,48px) 64px; }
+  .view{ padding-top:8px; }
+  .view[hidden]{ display:none; }
+
+  .back-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:none; border:none; color:var(--ink-soft); font-size:14px; font-weight:600;
+    cursor:pointer; padding:18px 0 6px; transition:color .15s;
+  }
+  .back-btn:hover{ color:var(--velvet-deep); }
+  .back-btn svg{ width:16px; height:16px; }
+
+  /* ---------- HOME ---------- */
+  .home-hero{ padding:clamp(36px,6vw,64px) 0 8px; text-align:center; }
+  .home-mark{
+    width:64px; height:64px; margin:0 auto 18px; border-radius:16px;
+    background:linear-gradient(155deg, var(--velvet), var(--velvet-deep));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Fraunces',serif; font-weight:700; font-size:30px;
+    box-shadow:var(--shadow-lg);
+  }
+  .home-hero h1{ font-size:clamp(32px,5.5vw,52px); }
+  .home-hero p{ margin-top:12px; font-size:16px; color:var(--ink-soft); max-width:44ch; margin-left:auto; margin-right:auto; line-height:1.6; }
+  .home-stats{ display:flex; justify-content:center; gap:28px; margin-top:22px; flex-wrap:wrap; }
+  .home-stat b{ display:block; font-family:'Fraunces',serif; font-size:22px; color:var(--velvet-deep); }
+  .home-stat span{ font-size:12px; color:var(--ink-faint); }
+
+  .home-cards{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:18px;
+    margin-top:clamp(28px,5vw,48px);
+  }
+  @media (max-width:820px){ .home-cards{ grid-template-columns:1fr; } }
+  .option-card{
+    text-align:left; cursor:pointer;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:16px;
+    padding:24px; box-shadow:var(--shadow);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .option-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:var(--tint-line); }
+  .option-icon{
+    width:44px; height:44px; border-radius:12px; background:var(--tint);
+    display:flex; align-items:center; justify-content:center; color:var(--velvet-deep);
+  }
+  .option-icon svg{ width:22px; height:22px; }
+  .option-card h3{ font-size:19px; }
+  .option-card p{ margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+  .option-arrow{ margin-top:auto; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--velvet-deep); }
+  .option-arrow svg{ width:14px; height:14px; transition:transform .15s; }
+  .option-card:hover .option-arrow svg{ transform:translateX(3px); }
+
+  /* ---------- SECTION HEAD (sub-views) ---------- */
+  .sub-head{ margin-top:4px; }
+  .sub-head h2{ font-size:clamp(24px,3.4vw,32px); }
+  .sub-head p{ margin-top:8px; color:var(--ink-soft); font-size:14.5px; max-width:60ch; line-height:1.55; }
+  .crumbs{ font-size:13px; color:var(--ink-faint); margin-top:6px; }
+  .crumbs b{ color:var(--velvet-deep); }
+  .scale-note{ font-size:12.5px; color:var(--ink-faint); margin-top:4px; }
+
+  /* ---------- YEAR / BRANCH GRIDS ---------- */
+  .pick-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(155px,1fr)); gap:12px; margin-top:22px; }
+  .pick-card{
+    cursor:pointer; text-align:left; min-width:0;
+    background:var(--paper-raised); border:1.5px solid var(--line); border-radius:12px;
+    padding:16px; box-shadow:var(--shadow);
+    transition:border-color .15s, transform .12s;
+  }
+  .pick-card:hover{ border-color:var(--velvet); transform:translateY(-2px); }
+  .pick-card .big{
+    font-family:'Fraunces',serif; font-weight:600; font-size:22px; color:var(--ink);
+    overflow-wrap:break-word; word-break:break-word; hyphens:auto; line-height:1.2;
+  }
+  .pick-card .sub{ font-size:12.5px; color:var(--ink-faint); margin-top:5px; }
+  .pick-card.branch-card{ min-width:0; }
+  .pick-card.branch-card .big{ font-size:14.5px; line-height:1.3; }
+
+  /* ---------- FILTERS / TABLE (shared) ---------- */
+  .filters{ display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 16px; }
+  .filters select, .filters input{
+    font-family:'Inter',sans-serif; font-size:14px; padding:9px 12px; border-radius:8px;
+    border:1.5px solid var(--line); background:var(--paper-raised); color:var(--ink); outline:none;
+  }
+  .filters select:focus, .filters input:focus{ border-color:var(--velvet); }
+  .filters input[type="text"]{ min-width:220px; flex:1; }
+
+  .table-wrap{ border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--paper-raised); box-shadow:var(--shadow); }
+  .table-scroll{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  thead th{
+    text-align:left; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--ink-faint); background:var(--tint); padding:12px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{ padding:12px 14px; border-bottom:1px solid var(--line-soft); color:var(--ink); vertical-align:middle; white-space:nowrap; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr.eligible{ background:var(--merit-soft); }
+  .rank-cell{ font-family:'JetBrains Mono',monospace; font-weight:600; }
+  .pct-cell{ font-family:'JetBrains Mono',monospace; color:var(--velvet-deep); font-weight:600; }
+  .pill{ display:inline-block; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:100px; background:var(--chip-bg); color:var(--ink-soft); }
+  .pill.eligible-pill{ background:var(--merit); color:#fff; }
+  .empty-row td{ text-align:center; color:var(--ink-faint); padding:32px; font-size:14px; white-space:normal; }
+  .result-count{ font-size:12.5px; color:var(--ink-faint); margin:10px 2px 0; }
+
+  /* ---------- RANK CHECK FORM ---------- */
+  .checker{ background:var(--paper-raised); border:1px solid var(--line); border-radius:16px; padding:22px clamp(18px,3vw,28px); box-shadow:var(--shadow); margin-top:22px; }
+  .checker-grid{ display:grid; grid-template-columns:1.1fr 1fr 1fr auto; gap:12px; }
+  @media (max-width:760px){ .checker-grid{ grid-template-columns:1fr 1fr; } }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:12px; color:var(--ink-faint); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .field input, .field select{
+    font-family:'Inter',sans-serif; font-size:15px; padding:11px 12px; border-radius:8px;
+    border:1.5px solid var(--line); background:var(--paper-raised); color:var(--ink); outline:none; transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus{ border-color:var(--velvet); }
+  .btn-primary{
+    align-self:flex-end; background:var(--ink); color:var(--paper); border:none; padding:12px 22px; border-radius:8px;
+    font-size:15px; font-weight:600; cursor:pointer; transition:opacity .15s, transform .1s; white-space:nowrap;
+  }
+  .btn-primary:hover{ opacity:.88; }
+  .btn-primary:active{ transform:scale(.98); }
+  .checker-hint{ margin-top:12px; font-size:13px; color:var(--ink-faint); }
+  .checker-hint b{ color:var(--merit); font-weight:600; }
+
+  /* ---------- COLLEGE DIRECTORY ---------- */
+  .college-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px; margin-top:22px; }
+  .college-card{ background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:var(--shadow); }
+  .card-tags{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:10px; }
+  .code{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--velvet-deep); background:var(--tint); padding:3px 8px; border-radius:6px; }
+  .rank-badge{ font-size:11px; font-weight:700; color:#fff; background:var(--velvet); padding:3px 9px; border-radius:100px; }
+  .tier-badge{ font-size:11px; font-weight:600; color:var(--ink-soft); background:var(--chip-bg); padding:3px 9px; border-radius:100px; }
+  .region-tag{ font-size:11px; font-weight:600; color:var(--ink-faint); background:var(--chip-bg); padding:3px 9px; border-radius:100px; margin-left:auto; }
+  .college-card h3{ font-size:17px; line-height:1.3; margin-bottom:4px; }
+  .college-card .loc{ font-size:13px; color:var(--ink-faint); margin-bottom:14px; }
+  .course-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{ font-size:12px; padding:4px 10px; border-radius:100px; background:var(--chip-bg); color:var(--ink-soft); border:1px solid var(--line-soft); }
+
+  /* ---------- FOOTER ---------- */
+  footer{ margin-top:56px; border-top:1px solid var(--line); padding:24px clamp(16px,4vw,48px) 36px; max-width:1180px; margin-left:auto; margin-right:auto; color:var(--ink-faint); font-size:13px; line-height:1.6; }
+  .disclaimer{ background:var(--tint); border:1px solid var(--tint-line); color:var(--velvet-deep); border-radius:10px; padding:14px 16px; font-size:13px; margin-bottom:16px; }
+  ::selection{ background:var(--tint-line); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="brand" id="brandBtn">
+    <div class="brand-mark">V</div>
+    <div class="brand-text">
+      <div class="brand-name">Velvet</div>
+      <div class="brand-tagline">Let's find your way, together.</div>
+    </div>
+  </button>
+
+  <div class="top-actions">
+    <button class="icon-btn" id="notifBtn" aria-label="Notifications">
+      <span class="dot"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg>
+    </button>
+    <div class="panel" id="notifPanel">
+      <div class="panel-title">Notifications</div>
+      <div class="notif-empty">
+        <div class="notif-item"><b>Dataset expanded.</b> The cutoff explorer and college directory now cover ~400 colleges across every region of Maharashtra.</div>
+        <div class="notif-item"><b>New:</b> Percentile is now shown alongside closing rank in cutoff tables.</div>
+        <div class="notif-item">You're all caught up — no new alerts.</div>
+      </div>
+    </div>
+
+    <button class="icon-btn" id="updatesBtn" aria-label="Updates">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
+    </button>
+    <div class="panel" id="updatesPanel">
+      <div class="panel-title">What's new</div>
+      <div class="update-list">
+        <div class="update-entry"><span class="update-ver">v1.4</span><span class="update-date">Aug 2026</span><div class="update-desc">Dataset scaled to ~400 colleges statewide, colleges now rank best-to-lowest within each region, percentile added next to closing rank, and a text-overflow bug on branch cards was fixed.</div></div>
+        <div class="update-entry"><span class="update-ver">v1.3</span><span class="update-date">Aug 2026</span><div class="update-desc">New home screen with CET Rank Check, PY Cutoff and BE/B.Tech Colleges as separate sections, plus this settings menu.</div></div>
+        <div class="update-entry"><span class="update-ver">v1.2</span><span class="update-date">Aug 2026</span><div class="update-desc">College directory expanded to cover every region of Maharashtra.</div></div>
+        <div class="update-entry"><span class="update-ver">v1.1</span><span class="update-date">Aug 2026</span><div class="update-desc">Rebranded to Velvet with a new colour theme.</div></div>
+        <div class="update-entry"><span class="update-ver">v1.0</span><span class="update-date">Aug 2026</span><div class="update-desc">Initial launch — rank checker, cutoff explorer and college directory.</div></div>
+      </div>
+    </div>
+
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+    </button>
+    <div class="panel" id="settingsPanel">
+      <div class="panel-title">Profile</div>
+      <div class="profile-row">
+        <div class="avatar">G</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">Guest</div>
+          <div style="font-size:12px;color:var(--ink-faint);">Not signed in</div>
+        </div>
+      </div>
+      <div class="profile-note">Accounts aren't wired up yet — this is a placeholder for when sign-in is added.</div>
+
+      <div class="panel-divider"></div>
+      <div class="panel-title">Theme</div>
+      <div class="theme-row">
+        <button class="theme-btn" id="lightBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          Light
+        </button>
+        <button class="theme-btn" id="darkBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+          Dark
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ HOME ============ -->
+  <section class="view" id="view-home">
+    <div class="home-hero">
+      <div class="home-mark">V</div>
+      <h1>Velvet</h1>
+      <p>All your ranks and B.Tech admission info, in one place.</p>
+      <div class="home-stats">
+        <div class="home-stat"><b id="statColleges">—</b><span>Colleges</span></div>
+        <div class="home-stat"><b id="statRegions">8</b><span>Regions covered</span></div>
+        <div class="home-stat"><b id="statYears">2020–26</b><span>Years of cutoffs</span></div>
+      </div>
+    </div>
+
+    <div class="home-cards">
+      <button class="option-card" data-target="view-rankcheck">
+        <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"></path></svg></div>
+        <h3>CET Rank Check</h3>
+        <p>Enter your rank and category to instantly see which colleges and branches you're likely eligible for.</p>
+        <div class="option-arrow">Check my rank <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div>
+      </button>
+
+      <button class="option-card" data-target="view-pycutoff-years">
+        <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></div>
+        <h3>PY Cutoff</h3>
+        <p>Previous years' cutoff lists, 2020–2026, across ~400 colleges. Pick a year, then a branch, to see closing ranks and percentile.</p>
+        <div class="option-arrow">Browse by year <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div>
+      </button>
+
+      <button class="option-card" data-target="view-colleges">
+        <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"></path></svg></div>
+        <h3>BE / B.Tech Colleges</h3>
+        <p>Every region of Maharashtra, ranked best to lowest — college codes, locations and the courses each one offers.</p>
+        <div class="option-arrow">View colleges <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ CET RANK CHECK ============ -->
+  <section class="view" id="view-rankcheck" hidden>
+    <button class="back-btn" data-back="view-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>Home</button>
+    <div class="sub-head">
+      <h2>CET Rank Check</h2>
+      <p>Enter your rank, category and the admission year you want to compare against. Matching college-branch combinations are highlighted below.</p>
+    </div>
+
+    <div class="checker">
+      <div class="checker-grid">
+        <div class="field">
+          <label for="rankInput">Your rank</label>
+          <input type="number" id="rankInput" placeholder="e.g. 4500" min="1">
+        </div>
+        <div class="field">
+          <label for="catInput">Category</label>
+          <select id="catInput">
+            <option value="GOPEN">General (GOPEN)</option>
+            <option value="OBC">OBC</option>
+            <option value="EWS">EWS</option>
+            <option value="SC">SC</option>
+            <option value="ST">ST</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="yearCheckInput">Compare against year</label>
+          <select id="yearCheckInput"></select>
+        </div>
+        <button class="btn-primary" id="checkBtn">Check eligibility</button>
+      </div>
+      <div class="checker-hint" id="checkerHint">Enter a rank and tap check to see matching colleges below.</div>
+    </div>
+
+    <div class="filters">
+      <select id="rcFilterBranch"></select>
+      <input type="text" id="rcFilterSearch" placeholder="Search college or branch…">
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>College</th><th>Branch</th><th>Category</th><th>Closing Rank</th><th>Percentile</th><th>Status</th></tr></thead>
+          <tbody id="rcTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-count" id="rcResultCount"></div>
+  </section>
+
+  <!-- ============ PY CUTOFF: YEARS ============ -->
+  <section class="view" id="view-pycutoff-years" hidden>
+    <button class="back-btn" data-back="view-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>Home</button>
+    <div class="sub-head">
+      <h2>PY Cutoff — choose a year</h2>
+      <p>Pick the admission year you want cutoff data for. You'll choose a branch next.</p>
+      <div class="scale-note" id="yearsScaleNote"></div>
+    </div>
+    <div class="pick-grid" id="yearGrid"></div>
+  </section>
+
+  <!-- ============ PY CUTOFF: BRANCHES ============ -->
+  <section class="view" id="view-pycutoff-branches" hidden>
+    <button class="back-btn" data-back="view-pycutoff-years"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>Years</button>
+    <div class="sub-head">
+      <h2>Choose a branch</h2>
+      <p class="crumbs">Year: <b id="branchYearLabel"></b></p>
+    </div>
+    <div class="pick-grid" id="branchGrid"></div>
+  </section>
+
+  <!-- ============ PY CUTOFF: LIST ============ -->
+  <section class="view" id="view-pycutoff-list" hidden>
+    <button class="back-btn" data-back="view-pycutoff-branches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>Branches</button>
+    <div class="sub-head">
+      <h2>Cutoff list</h2>
+      <p class="crumbs">Year: <b id="listYearLabel"></b> &nbsp;·&nbsp; Branch: <b id="listBranchLabel"></b></p>
+    </div>
+
+    <div class="filters">
+      <select id="listFilterCategory">
+        <option value="ALL">All categories</option>
+        <option value="GOPEN">General (GOPEN)</option>
+        <option value="OBC">OBC</option>
+        <option value="EWS">EWS</option>
+        <option value="SC">SC</option>
+        <option value="ST">ST</option>
+      </select>
+      <input type="text" id="listFilterSearch" placeholder="Search college…">
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>College</th><th>Category</th><th>Closing Rank</th><th>Percentile</th></tr></thead>
+          <tbody id="listTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-count" id="listResultCount"></div>
+  </section>
+
+  <!-- ============ COLLEGES ============ -->
+  <section class="view" id="view-colleges" hidden>
+    <button class="back-btn" data-back="view-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>Home</button>
+    <div class="sub-head">
+      <h2>BE / B.Tech Colleges</h2>
+      <p>College codes, locations and courses offered. Pick a region to see it ranked best to lowest.</p>
+      <div class="scale-note" id="collegesScaleNote"></div>
+    </div>
+
+    <div class="filters">
+      <select id="collegeRegionFilter"></select>
+      <input type="text" id="collegeSearch" placeholder="Search by name, code, city or course…">
+    </div>
+
+    <div class="college-grid" id="collegeGrid"></div>
+    <div class="result-count" id="collegeResultCount"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="disclaimer"><b>Sample data notice:</b> college names, codes, tiers, cutoff ranks and percentiles here are procedurally generated placeholder data for this prototype — not official CAP/JoSAA/MHT CET figures. Maharashtra's actual MHT CET CAP process includes roughly 380 participating colleges; this demo is scaled to ~400 to show the app working at a large, realistic scale. Swap in your real dataset before publishing.</div>
+  <div>Velvet is a simple starting point — extend it with real data, accounts, or a backend as needed.</div>
+</footer>
+
+<script>
+  /* =========================================================
+     DETERMINISTIC RANDOM HELPERS
+  ========================================================= */
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function seededRandom(seed){ const x = Math.sin(seed) * 10000; return x - Math.floor(x); }
+
+  /* =========================================================
+     STATIC LOOKUPS
+  ========================================================= */
+  const BRANCHES = ["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering","Electrical Engineering","Electronics & Telecommunication","AI & Data Science"];
+  const CATEGORIES = ["GOPEN","OBC","EWS","SC","ST"];
+  const YEARS = [2020,2021,2022,2023,2024,2025,2026];
+  const branchWeights = { "Computer Engineering":5, "Information Technology":4, "Mechanical Engineering":4, "Civil Engineering":3, "Electrical Engineering":3, "Electronics & Telecommunication":3, "AI & Data Science":2 };
+
+  const REGION_CITIES = {
+    "Mumbai": ["Mumbai","Thane","Navi Mumbai","Kalyan","Vasai-Virar"],
+    "Pune": ["Pune","Pimpri-Chinchwad","Baramati","Talegaon"],
+    "Nashik": ["Nashik","Malegaon","Niphad"],
+    "Western Maharashtra": ["Kolhapur","Satara","Sangli","Solapur","Karad","Ichalkaranji"],
+    "Marathwada": ["Chh. Sambhajinagar","Nanded","Latur","Beed","Jalna","Parbhani","Hingoli","Dharashiv"],
+    "Vidarbha": ["Nagpur","Amravati","Akola","Yavatmal","Wardha","Chandrapur","Gondia","Bhandara","Buldhana"],
+    "Khandesh": ["Jalgaon","Dhule","Nandurbar","Bhusawal"],
+    "Konkan": ["Raigad","Ratnagiri","Sindhudurg","Palghar","Alibaug"]
+  };
+  const REGION_TARGETS = { "Mumbai":70, "Pune":90, "Nashik":30, "Western Maharashtra":60, "Marathwada":50, "Vidarbha":60, "Khandesh":20, "Konkan":20 };
+  const FOUNDERS = ["Shri Sant Gadge Baba","Sinhgad","Bharati Vidyapeeth","JSPM","MET","SVERI","Guru Nanak","Padmashri Vikhe Patil","Loknete Gopinathji Munde","Annasaheb Dange","Sanjivani","Matoshri","Zeal","Trinity","Vidya Pratishthan","Rajarshi Shahu","Vishwakarma","Adarsh","Genba Sopanrao Moze","Sandip","AISSMS","Fr. C. Rodrigues","Ramrao Adik","PES","Vishwabharati","Dr. D. Y. Patil","Pravara Rural","Yashwantrao Chavan","Shreeyash","Anuradha","Amrutvahini","Terna","Rajarambapu"];
+  const SUFFIXES = ["College of Engineering","Institute of Technology","College of Engineering & Technology","Institute of Engineering & Management","Institute of Engineering","College of Engineering & Research","Institute of Technology & Management"];
+
+  function weightedSampleBranches(count, rng){
+    const pool = BRANCHES.map(b => ({ b, w: branchWeights[b] * (0.6 + rng()) }));
+    pool.sort((a,b) => b.w - a.w);
+    return pool.slice(0, count).map(p => p.b);
+  }
+
+  /* =========================================================
+     COLLEGE DATASET — 14 real, well-known anchor colleges
+     plus ~386 procedurally generated ones so every region of
+     Maharashtra is represented at a realistic scale.
+  ========================================================= */
+  const ANCHOR_COLLEGES = [
+    { code:"ENG-001", name:"Veermata Jijabai Technological Institute", city:"Mumbai", region:"Mumbai", ownership:"Government", tier:1,
+      courses:["Computer Engineering","Electronics & Telecommunication","Mechanical Engineering","Information Technology"] },
+    { code:"ENG-002", name:"Sardar Patel College of Engineering", city:"Mumbai", region:"Mumbai", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Information Technology","Electrical Engineering","Mechanical Engineering"] },
+    { code:"ENG-003", name:"College of Engineering Pune Technological University", city:"Pune", region:"Pune", ownership:"Government", tier:1,
+      courses:["Computer Engineering","Information Technology","AI & Data Science","Mechanical Engineering","Civil Engineering","Electrical Engineering"] },
+    { code:"ENG-004", name:"Pune Institute of Computer Technology", city:"Pune", region:"Pune", ownership:"Autonomous / Aided", tier:2,
+      courses:["Computer Engineering","Information Technology","Electronics & Telecommunication","AI & Data Science"] },
+    { code:"ENG-005", name:"K. K. Wagh Institute of Engineering Education & Research", city:"Nashik", region:"Nashik", ownership:"Autonomous / Aided", tier:3,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering","Electronics & Telecommunication"] },
+    { code:"ENG-006", name:"Government College of Engineering, Nashik", city:"Nashik", region:"Nashik", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Electrical Engineering","Mechanical Engineering","Civil Engineering"] },
+    { code:"ENG-007", name:"Walchand College of Engineering", city:"Sangli", region:"Western Maharashtra", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Mechanical Engineering","Civil Engineering","Electrical Engineering","Information Technology"] },
+    { code:"ENG-008", name:"Kolhapur Institute of Technology", city:"Kolhapur", region:"Western Maharashtra", ownership:"Private Unaided", tier:3,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering"] },
+    { code:"ENG-009", name:"Government College of Engineering, Aurangabad", city:"Chh. Sambhajinagar", region:"Marathwada", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Electronics & Telecommunication"] },
+    { code:"ENG-010", name:"Shri Guru Gobind Singhji Institute of Engineering & Technology", city:"Nanded", region:"Marathwada", ownership:"Autonomous / Aided", tier:1,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering","Electrical Engineering"] },
+    { code:"ENG-011", name:"Yeshwantrao Chavan College of Engineering", city:"Nagpur", region:"Vidarbha", ownership:"Private Unaided", tier:3,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering"] },
+    { code:"ENG-012", name:"Government College of Engineering, Amravati", city:"Amravati", region:"Vidarbha", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Electrical Engineering","Mechanical Engineering","Civil Engineering"] },
+    { code:"ENG-013", name:"Government College of Engineering, Jalgaon", city:"Jalgaon", region:"Khandesh", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering"] },
+    { code:"ENG-014", name:"Dr. Babasaheb Ambedkar Technological University", city:"Lonere, Raigad", region:"Konkan", ownership:"Government", tier:2,
+      courses:["Computer Engineering","Information Technology","Mechanical Engineering","Civil Engineering","Electronics & Telecommunication"] },
+  ];
+
+  function buildColleges(){
+    const list = [...ANCHOR_COLLEGES];
+    const anchorCounts = {};
+    ANCHOR_COLLEGES.forEach(a => { anchorCounts[a.region] = (anchorCounts[a.region]||0) + 1; });
+
+    const rng = mulberry32(20260822);
+    let codeNum = ANCHOR_COLLEGES.length + 1;
+
+    Object.keys(REGION_TARGETS).forEach(region => {
+      const need = REGION_TARGETS[region] - (anchorCounts[region] || 0);
+      const cities = REGION_CITIES[region];
+      for (let i = 0; i < need; i++){
+        const city = cities[Math.floor(rng() * cities.length)];
+        const ownRoll = rng();
+        let ownership, tier;
+        if (ownRoll < 0.10){ ownership = "Government"; tier = 1 + Math.floor(rng()*2); }
+        else if (ownRoll < 0.28){ ownership = "Autonomous / Aided"; tier = 2 + Math.floor(rng()*2); }
+        else { ownership = "Private Unaided"; tier = 3 + Math.floor(rng()*3); }
+
+        const founder = FOUNDERS[Math.floor(rng()*FOUNDERS.length)];
+        const suffix = SUFFIXES[Math.floor(rng()*SUFFIXES.length)];
+        const name = ownership === "Government" ? `Government ${suffix}, ${city}` : `${founder} ${suffix}, ${city}`;
+
+        const courseCount = 3 + Math.floor(rng()*3);
+        const courses = weightedSampleBranches(courseCount, rng);
+
+        list.push({ code:`ENG-${String(codeNum).padStart(3,'0')}`, name, city, region, ownership, tier, courses });
+        codeNum++;
+      }
+    });
+    return list;
+  }
+
+  const COLLEGES = buildColleges();
+
+  /* =========================================================
+     CUTOFF + PERCENTILE GENERATION
+  ========================================================= */
+  const TIER_FACTOR = { 1:1, 2:2, 3:3.5, 4:5.5, 5:7.5 };
+  function baseRank(tier, branchIdx){
+    const collegeFactor = TIER_FACTOR[tier] || 5;
+    const branchFactor = [1,1.3,2.4,3,2.1,1.6,1.1][branchIdx] || 2;
+    return Math.round(400 * collegeFactor * branchFactor);
+  }
+  const categoryMultiplier = { GOPEN:1, EWS:1.25, OBC:1.6, SC:2.6, ST:3.4 };
+
+  function candidatePoolForYear(year){ return Math.round(950000 * (1 + (year - 2020) * 0.012)); }
+  function rankToPercentile(rank, year){
+    const pool = candidatePoolForYear(year);
+    let pct = 100 - (rank / pool) * 100;
+    pct = Math.max(0, Math.min(99.99, pct));
+    return pct.toFixed(2);
+  }
+
+  const CUTOFFS = [];
+  let seedN = 0;
+  COLLEGES.forEach((college, ci) => {
+    college.courses.forEach((courseName) => {
+      const bi = BRANCHES.indexOf(courseName);
+      if (bi === -1) return;
+      YEARS.forEach((year, yi) => {
+        CATEGORIES.forEach((cat, cati) => {
+          seedN++;
+          const noise = 0.85 + seededRandom(seedN * 12.9898) * 0.35;
+          const yearTrend = 1 + (year - 2020) * 0.035;
+          const rank = Math.max(15, Math.round(baseRank(college.tier, bi) * categoryMultiplier[cat] * noise * yearTrend));
+          CUTOFFS.push({
+            year, collegeCode: college.code, collegeName: college.name, region: college.region,
+            branch: courseName, category: cat, closingRank: rank, percentile: rankToPercentile(rank, year)
+          });
+        });
+      });
+    });
+  });
+
+  document.getElementById('statColleges').textContent = COLLEGES.length + '+';
+
+  /* =========================================================
+     NAVIGATION
+  ========================================================= */
+  let selectedYear = null;
+  let selectedBranch = null;
+
+  function showView(id){
+    document.querySelectorAll('.view').forEach(v => v.hidden = true);
+    document.getElementById(id).hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    closeAllPanels();
+  }
+
+  document.getElementById('brandBtn').addEventListener('click', () => showView('view-home'));
+  document.querySelectorAll('[data-target]').forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.getAttribute('data-target')));
+  });
+  document.querySelectorAll('[data-back]').forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.getAttribute('data-back')));
+  });
+
+  /* =========================================================
+     TOP-RIGHT PANELS
+  ========================================================= */
+  const panels = {
+    notifBtn: document.getElementById('notifPanel'),
+    updatesBtn: document.getElementById('updatesPanel'),
+    settingsBtn: document.getElementById('settingsPanel'),
+  };
+  function closeAllPanels(){
+    Object.values(panels).forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('is-active'));
+  }
+  Object.keys(panels).forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = panels[btnId].classList.contains('open');
+      closeAllPanels();
+      if (!isOpen){ panels[btnId].classList.add('open'); btn.classList.add('is-active'); }
+    });
+  });
+  document.addEventListener('click', closeAllPanels);
+  document.querySelectorAll('.panel').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+  const lightBtn = document.getElementById('lightBtn');
+  const darkBtn = document.getElementById('darkBtn');
+  function setTheme(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    lightBtn.classList.toggle('active', mode === 'light');
+    darkBtn.classList.toggle('active', mode === 'dark');
+  }
+  lightBtn.addEventListener('click', () => setTheme('light'));
+  darkBtn.addEventListener('click', () => setTheme('dark'));
+  setTheme('light');
+
+  /* =========================================================
+     SHARED TABLE ROW RENDERER
+  ========================================================= */
+  function rowsHTML(rows, includeBranch, eligibleFn){
+    if (rows.length === 0){
+      const cols = includeBranch ? 6 : 4;
+      return `<tr class="empty-row"><td colspan="${cols}">No results match these filters.</td></tr>`;
+    }
+    return rows.map(r => {
+      const eligible = eligibleFn ? eligibleFn(r) : false;
+      const branchCell = includeBranch ? `<td>${r.branch}</td>` : '';
+      const statusCell = includeBranch ? `<td>${eligible ? '<span class="pill eligible-pill">Eligible</span>' : '—'}</td>` : '';
+      return `<tr class="${eligible ? 'eligible' : ''}">
+        <td>${r.collegeName} <span class="mono" style="color:var(--ink-faint);font-size:12px;">${r.collegeCode}</span></td>
+        ${branchCell}
+        <td><span class="pill">${r.category}</span></td>
+        <td class="rank-cell">${r.closingRank.toLocaleString('en-IN')}</td>
+        <td class="pct-cell">${r.percentile}%ile</td>
+        ${statusCell}
+      </tr>`;
+    }).join('');
+  }
+
+  /* =========================================================
+     CET RANK CHECK VIEW
+  ========================================================= */
+  const yearCheckInput = document.getElementById('yearCheckInput');
+  [...YEARS].reverse().forEach(y => yearCheckInput.appendChild(new Option(y, y)));
+
+  const rcFilterBranch = document.getElementById('rcFilterBranch');
+  rcFilterBranch.appendChild(new Option('All branches','ALL'));
+  BRANCHES.forEach(b => rcFilterBranch.appendChild(new Option(b, b)));
+  const rcFilterSearch = document.getElementById('rcFilterSearch');
+
+  let currentRankCheck = null;
+
+  function renderRankCheckTable(){
+    const tbody = document.getElementById('rcTableBody');
+    const branchVal = rcFilterBranch.value;
+    const searchVal = rcFilterSearch.value.trim().toLowerCase();
+    const year = currentRankCheck ? currentRankCheck.year : parseInt(yearCheckInput.value, 10);
+    const cat = currentRankCheck ? currentRankCheck.category : null;
+
+    let rows = CUTOFFS.filter(r => r.year === year);
+    if (cat) rows = rows.filter(r => r.category === cat);
+    if (branchVal !== 'ALL') rows = rows.filter(r => r.branch === branchVal);
+    if (searchVal) rows = rows.filter(r => (r.collegeName + ' ' + r.branch).toLowerCase().includes(searchVal));
+    rows.sort((a,b) => a.closingRank - b.closingRank);
+    const total = rows.length;
+    rows = rows.slice(0, 200);
+
+    tbody.innerHTML = rowsHTML(rows, true, (r) => currentRankCheck ? currentRankCheck.rank <= r.closingRank : false);
+    document.getElementById('rcResultCount').textContent = `${total.toLocaleString('en-IN')} matching listings` + (total > 200 ? ' (showing top 200 by closing rank)' : '');
+  }
+
+  document.getElementById('checkBtn').addEventListener('click', () => {
+    const rankVal = parseInt(document.getElementById('rankInput').value, 10);
+    const catVal = document.getElementById('catInput').value;
+    const yearVal = parseInt(yearCheckInput.value, 10);
+    const hint = document.getElementById('checkerHint');
+
+    if (!rankVal || rankVal < 1){
+      hint.innerHTML = 'Enter a valid rank number first.';
+      currentRankCheck = null;
+      renderRankCheckTable();
+      return;
+    }
+    currentRankCheck = { rank: rankVal, category: catVal, year: yearVal };
+    const matchCount = CUTOFFS.filter(r => r.category === catVal && r.year === yearVal && rankVal <= r.closingRank).length;
+    hint.innerHTML = `Rank <b>${rankVal.toLocaleString('en-IN')}</b> (${catVal}, ${yearVal}) qualifies for <b>${matchCount.toLocaleString('en-IN')}</b> college-branch combinations — highlighted below.`;
+    renderRankCheckTable();
+  });
+  rcFilterBranch.addEventListener('change', renderRankCheckTable);
+  rcFilterSearch.addEventListener('input', renderRankCheckTable);
+  yearCheckInput.addEventListener('change', renderRankCheckTable);
+  renderRankCheckTable();
+
+  /* =========================================================
+     PY CUTOFF: YEARS -> BRANCHES -> LIST
+  ========================================================= */
+  document.getElementById('yearsScaleNote').textContent = `Covering ${COLLEGES.length}+ colleges across all 8 regions of Maharashtra.`;
+
+  const yearGrid = document.getElementById('yearGrid');
+  [...YEARS].reverse().forEach(y => {
+    const card = document.createElement('button');
+    card.className = 'pick-card';
+    const count = CUTOFFS.filter(r => r.year === y).length;
+    card.innerHTML = `<div class="big">${y}</div><div class="sub">${count.toLocaleString('en-IN')} listings</div>`;
+    card.addEventListener('click', () => openYear(y));
+    yearGrid.appendChild(card);
+  });
+
+  function openYear(year){
+    selectedYear = year;
+    document.getElementById('branchYearLabel').textContent = year;
+    const branchGrid = document.getElementById('branchGrid');
+    branchGrid.innerHTML = '';
+    BRANCHES.forEach(b => {
+      const count = CUTOFFS.filter(r => r.year === year && r.branch === b).length;
+      if (count === 0) return;
+      const card = document.createElement('button');
+      card.className = 'pick-card branch-card';
+      card.innerHTML = `<div class="big">${b}</div><div class="sub">${count.toLocaleString('en-IN')} listings</div>`;
+      card.addEventListener('click', () => openBranch(b));
+      branchGrid.appendChild(card);
+    });
+    showView('view-pycutoff-branches');
+  }
+
+  function openBranch(branch){
+    selectedBranch = branch;
+    document.getElementById('listYearLabel').textContent = selectedYear;
+    document.getElementById('listBranchLabel').textContent = branch;
+    document.getElementById('listFilterCategory').value = 'ALL';
+    document.getElementById('listFilterSearch').value = '';
+    renderListTable();
+    showView('view-pycutoff-list');
+  }
+
+  function renderListTable(){
+    const tbody = document.getElementById('listTableBody');
+    const catVal = document.getElementById('listFilterCategory').value;
+    const searchVal = document.getElementById('listFilterSearch').value.trim().toLowerCase();
+
+    let rows = CUTOFFS.filter(r => r.year === selectedYear && r.branch === selectedBranch);
+    if (catVal !== 'ALL') rows = rows.filter(r => r.category === catVal);
+    if (searchVal) rows = rows.filter(r => r.collegeName.toLowerCase().includes(searchVal));
+    rows.sort((a,b) => a.closingRank - b.closingRank);
+    const total = rows.length;
+    rows = rows.slice(0, 300);
+
+    tbody.innerHTML = rowsHTML(rows, false, null);
+    document.getElementById('listResultCount').textContent = `${total.toLocaleString('en-IN')} institutes listed` + (total > 300 ? ' (showing top 300 by closing rank)' : '');
+  }
+  document.getElementById('listFilterCategory').addEventListener('change', renderListTable);
+  document.getElementById('listFilterSearch').addEventListener('input', renderListTable);
+
+  /* =========================================================
+     COLLEGE DIRECTORY (best to lowest within a region)
+  ========================================================= */
+  document.getElementById('collegesScaleNote').textContent = `${COLLEGES.length} colleges listed across Mumbai, Pune, Nashik, Western Maharashtra, Marathwada, Vidarbha, Khandesh and Konkan.`;
+
+  const collegeRegionFilter = document.getElementById('collegeRegionFilter');
+  const regions = ['ALL', ...Object.keys(REGION_TARGETS)];
+  regions.forEach(r => collegeRegionFilter.appendChild(new Option(r === 'ALL' ? 'All regions' : r, r)));
+
+  function renderColleges(){
+    const grid = document.getElementById('collegeGrid');
+    const q = document.getElementById('collegeSearch').value.trim().toLowerCase();
+    const regionVal = collegeRegionFilter.value;
+    grid.innerHTML = '';
+
+    let filtered = COLLEGES.filter(c => {
+      if (regionVal !== 'ALL' && c.region !== regionVal) return false;
+      if (!q) return true;
+      const hay = (c.name + ' ' + c.code + ' ' + c.city + ' ' + c.region + ' ' + c.courses.join(' ')).toLowerCase();
+      return hay.includes(q);
+    });
+
+    filtered = filtered.slice().sort((a,b) => a.tier - b.tier || a.name.localeCompare(b.name));
+    const total = filtered.length;
+    const shown = filtered.slice(0, 150);
+
+    if (shown.length === 0){
+      grid.innerHTML = '<div style="color:var(--ink-faint);font-size:14px;">No colleges match that search.</div>';
+      document.getElementById('collegeResultCount').textContent = '';
+      return;
+    }
+
+    shown.forEach((c, idx) => {
+      const rankBadge = regionVal !== 'ALL'
+        ? `<span class="rank-badge">#${idx+1} in ${c.region}</span>`
+        : `<span class="tier-badge">Tier ${c.tier}</span>`;
+      const card = document.createElement('div');
+      card.className = 'college-card';
+      card.innerHTML = `
+        <div class="card-tags">
+          <span class="code">${c.code}</span>
+          ${rankBadge}
+          <span class="region-tag">${c.region}</span>
+        </div>
+        <h3>${c.name}</h3>
+        <div class="loc">${c.city}, Maharashtra · ${c.ownership}</div>
+        <div class="course-chips">${c.courses.map(co => `<span class="chip">${co}</span>`).join('')}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    document.getElementById('collegeResultCount').textContent = `${total.toLocaleString('en-IN')} colleges` + (total > 150 ? ' (showing top 150, best to lowest)' : ', best to lowest');
+  }
+  document.getElementById('collegeSearch').addEventListener('input', renderColleges);
+  collegeRegionFilter.addEventListener('change', renderColleges);
+  renderColleges();
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  showView('view-home');
+</script>
+
+</body>
+</html>
